@@ -73,15 +73,15 @@ class RegisterDomainTool extends MCPTool<RegisterDomainInput> {
   };
 
   // Format response according to MCP requirements
-  private formatTextResponse(message: string): MCPResponse {
+  private formatTextResponse(message: string): any {
     return {
       content: [
         {
           type: 'text',
           text: message,
-          // These fields are required for MCP responses
-          data: '', 
-          mimeType: 'text/plain'
+          data: message,
+          mimeType: 'text/plain',
+          resource: null
         }
       ]
     };

@@ -19,6 +19,21 @@ class GetPricingTool extends MCPTool<GetPricingInput> {
     },
   };
 
+  // Format response according to MCP requirements
+  private formatTextResponse(message: string): any {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: message,
+          data: message,
+          mimeType: 'text/plain',
+          resource: null
+        }
+      ]
+    };
+  }
+
   async execute(input: GetPricingInput) {
     const { tld } = input;
     const cleanTld = tld.replace(/^\./, ''); // Remove leading dot if present
@@ -35,7 +50,7 @@ class GetPricingTool extends MCPTool<GetPricingInput> {
       const pricingData = this.extractPricingData(apiResponse, cleanTld);
       
       // Return formatted pricing information
-      return `
+      return this.formatTextResponse(`
 Pricing for .${cleanTld} domains:
 
 Registration:
@@ -47,12 +62,12 @@ ${this.formatPricingYears(pricingData.renewal)}
 Transfer: ${pricingData.transfer}
 
 ${pricingData.isPremium ? 'This is a premium domain with special pricing.' : ''}
-`.trim();
+`.trim());
     } catch (error) {
       if (error instanceof Error) {
-        return `Error getting pricing information: ${error.message}`;
+        return this.formatTextResponse(`Error getting pricing information: ${error.message}`);
       }
-      return `Error getting pricing information: Unknown error`;
+      return this.formatTextResponse(`Error getting pricing information: Unknown error`);
     }
   }
   

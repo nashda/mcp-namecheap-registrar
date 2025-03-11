@@ -19,6 +19,21 @@ class CheckDomainTool extends MCPTool<CheckDomainInput> {
     },
   };
 
+  // Format response according to MCP requirements
+  private formatTextResponse(message: string): any {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: message,
+          data: message,
+          mimeType: 'text/plain',
+          resource: null
+        }
+      ]
+    };
+  }
+
   async execute(input: CheckDomainInput) {
     const { domain } = input;
     
@@ -34,12 +49,12 @@ class CheckDomainTool extends MCPTool<CheckDomainInput> {
       const status = available ? "available" : "unavailable";
       const premiumInfo = isPremium ? " (Premium Domain)" : "";
       
-      return `Domain ${domain} is ${status} for registration${premiumInfo}.`;
+      return this.formatTextResponse(`Domain ${domain} is ${status} for registration${premiumInfo}.`);
     } catch (error) {
       if (error instanceof Error) {
-        return `Error checking domain availability: ${error.message}`;
+        return this.formatTextResponse(`Error checking domain availability: ${error.message}`);
       }
-      return `Error checking domain availability: Unknown error`;
+      return this.formatTextResponse(`Error checking domain availability: Unknown error`);
     }
   }
 
