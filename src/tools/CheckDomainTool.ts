@@ -9,7 +9,7 @@ interface CheckDomainInput {
 }
 
 class CheckDomainTool extends MCPTool<CheckDomainInput> {
-  name = "check_domain";
+  name = "mcp__check_domain";
   description = "Check if a domain name is available for registration";
 
   schema = {
