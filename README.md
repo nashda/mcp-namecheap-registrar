@@ -23,6 +23,21 @@ A Cursor MCP (Machine Capability Provider) integration for Namecheap Domains API
 - A [Namecheap](https://www.namecheap.com/) account with API access enabled
 - Namecheap API Key (can be obtained from your Namecheap account)
 
+### Namecheap API Account Requirements
+
+To use the Namecheap API, your account must meet one of the following requirements:
+
+- Have at least 20 domains under your account
+- Have at least $50 on your account balance
+- Have at least $50 spent within the last 2 years
+
+Additionally, you need to:
+- Whitelist the IP address(es) from which you'll access the API
+- Enable API access in your Namecheap account settings
+- Generate an API key from your Namecheap dashboard
+
+For more details, see the [Namecheap API FAQ](https://www.namecheap.com/support/knowledgebase/article.aspx/9739/63/api-faq/).
+
 ## Setup Instructions
 
 1. **Clone the repository**
@@ -75,6 +90,25 @@ npm run build
 ```bash
 ./start-mcp.sh
 ```
+
+## Adding to Cursor as an MCP Server
+
+To add this as an MCP server in Cursor:
+
+1. Open Cursor
+2. Go to **Settings** (gear icon in the bottom left)
+3. Select **MCP** from the settings menu
+4. Click on **New Server**
+5. Choose the **Command** option
+6. Enter the command to start your MCP server:
+   ```
+   /path/to/this/repo/start-mcp.sh
+   ```
+   (Replace `/path/to/this/repo/` with the actual path to where you cloned this repository)
+7. Give your server a name (e.g., "Namecheap Domains")
+8. Click **Add Server**
+
+Once added, you can use the MCP tools directly in Cursor's AI interface.
 
 ## Usage Examples
 
@@ -156,51 +190,4 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for det
 ## Acknowledgments
 
 - [Cursor AI](https://cursor.sh/) for the MCP framework
-- [Namecheap](https://www.namecheap.com/) for providing the domain API
-
-## MCP Integration
-
-This server follows the Managed Component Package (MCP) specification for Cursor. To use it as an MCP:
-
-1. **Install as an MCP:**
-   ```
-   cursor mcp install namecheap-domains
-   ```
-
-2. **Available Commands:**
-   - `check domain example.com` - Check if a domain is available
-   - `get pricing for com` - Get pricing information for a TLD
-   - `register domain example.com` - Start domain registration process
-
-3. **Command Patterns:**
-   All commands use regex patterns for natural language processing:
-   - Domain check: `check domain ([\\w-]+\\.\\w+)`
-   - Pricing check: `get pricing for ([\\w]+)`
-   - Domain registration: `register domain ([\\w-]+\\.\\w+)`
-
-4. **Response Format:**
-   All commands return standardized responses with the following structure:
-   ```json
-   {
-     "success": true,
-     "result": {
-       "response": "Human readable response",
-       "data": {
-         // Command-specific data
-       }
-     }
-   }
-   ```
-
-   Error responses follow this format:
-   ```json
-   {
-     "success": false,
-     "error": "Error message"
-   }
-   ```
-
-5. **Multi-step Commands:**
-   Some commands like registration may require multiple steps. The response will include a `complete: false` flag and `required_fields` object when more information is needed.
-
-For more information on MCP development, see the Cursor MCP documentation. 
+- [Namecheap](https://www.namecheap.com/) for providing the domain API 

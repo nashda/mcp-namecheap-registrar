@@ -13,10 +13,19 @@ const __dirname = path.dirname(__filename);
 
 interface RegisterDomainInput {
   domain: string;
-  years?: number;
+  years?: string;
   nameservers?: string;
-  confirmPurchase?: boolean;
-  enableWhoisPrivacy?: boolean;
+  confirmPurchase?: string;
+  enableWhoisPrivacy?: string;
+}
+
+// Adding new interface for our internal use with proper types
+interface ProcessedRegisterDomainInput {
+  domain: string;
+  years: number;
+  nameservers?: string;
+  confirmPurchase: boolean;
+  enableWhoisPrivacy: boolean;
 }
 
 // Interface for registrant contact information
@@ -55,7 +64,7 @@ class RegisterDomainTool extends MCPTool<RegisterDomainInput> {
       description: "Domain name to register (e.g., example.com)",
     },
     years: {
-      type: z.number().optional(),
+      type: z.string().optional(),
       description: "Number of years to register the domain for (default: 1)",
     },
     nameservers: {
@@ -63,11 +72,11 @@ class RegisterDomainTool extends MCPTool<RegisterDomainInput> {
       description: "Optional comma-separated list of nameservers",
     },
     confirmPurchase: {
-      type: z.boolean().optional(),
+      type: z.string().optional(),
       description: "Set to true to confirm and complete the purchase (default: false)",
     },
     enableWhoisPrivacy: {
-      type: z.boolean().optional(),
+      type: z.string().optional(),
       description: "Enable WhoisGuard privacy protection (default: true)",
     }
   };
@@ -88,18 +97,19 @@ class RegisterDomainTool extends MCPTool<RegisterDomainInput> {
   }
 
   async execute(input: RegisterDomainInput) {
-    const { 
-      domain, 
-      years = 1, 
-      nameservers, 
-      confirmPurchase = false,
-      enableWhoisPrivacy = true 
-    } = input;
+    // Process and convert the input parameters to the appropriate types
+    const processed: ProcessedRegisterDomainInput = {
+      domain: input.domain,
+      years: input.years ? parseInt(input.years, 10) : 1,
+      nameservers: input.nameservers,
+      confirmPurchase: input.confirmPurchase === 'true',
+      enableWhoisPrivacy: input.enableWhoisPrivacy !== 'false' // Default to true unless explicitly set to 'false'
+    };
     
     try {
       // Check availability first
       const apiResponse = await this.callNamecheapApi('namecheap.domains.check', {
-        DomainList: domain
+        DomainList: processed.domain
       });
       
       const result = apiResponse.CommandResponse.DomainCheckResult;
@@ -107,7 +117,7 @@ class RegisterDomainTool extends MCPTool<RegisterDomainInput> {
       const isPremium = result.$.IsPremiumName === 'true';
       
       if (!available) {
-        return this.formatTextResponse(`Domain ${domain} is not available for registration.`);
+        return this.formatTextResponse(`Domain ${processed.domain} is not available for registration.`);
       }
       
       // Try to load registrant profile
@@ -116,7 +126,7 @@ class RegisterDomainTool extends MCPTool<RegisterDomainInput> {
         registrantProfile = this.loadRegistrantProfile();
       } catch (profileError) {
         return this.formatTextResponse(`
-Domain ${domain} is available for registration!
+Domain ${processed.domain} is available for registration!
 
 However, I could not find a registrant profile for contact information.
 Please create a file named "registrant-profile.json" in the project root with your contact details.
@@ -127,7 +137,7 @@ You can use "registrant-profile.example.json" as a template.
       // Get domain pricing information
       let pricingInfo: string;
       try {
-        pricingInfo = await this.getDomainPricing(domain, years);
+        pricingInfo = await this.getDomainPricing(processed.domain, processed.years);
       } catch (pricingError) {
         pricingInfo = 'Pricing information unavailable';
       }
@@ -136,22 +146,22 @@ You can use "registrant-profile.example.json" as a template.
       const formattedProfile = this.formatProfileForDisplay(registrantProfile);
       
       // If this is not a purchase confirmation, show registration details
-      if (!confirmPurchase) {
+      if (!processed.confirmPurchase) {
         const premiumWarning = isPremium ? `
 ⚠️ PREMIUM DOMAIN NOTICE ⚠️
 This is a premium domain name that may have a higher registration fee than standard domains.
 ` : '';
         
         return this.formatTextResponse(`
-Domain ${domain} is available for registration!
+Domain ${processed.domain} is available for registration!
 ${premiumWarning}
 ${pricingInfo}
 
 Registration details:
-- Domain: ${domain}
-- Period: ${years} year(s)
-${nameservers ? `- Custom nameservers: ${nameservers}` : '- Default nameservers will be used'}
-- WhoisGuard Privacy: ${enableWhoisPrivacy ? 'Enabled' : 'Disabled'}
+- Domain: ${processed.domain}
+- Period: ${processed.years} year(s)
+${processed.nameservers ? `- Custom nameservers: ${processed.nameservers}` : '- Default nameservers will be used'}
+- WhoisGuard Privacy: ${processed.enableWhoisPrivacy ? 'Enabled' : 'Disabled'}
 
 Contact information from your registrant profile:
 ${formattedProfile}
@@ -166,10 +176,13 @@ To complete the registration, run this command again with confirmPurchase=true.
       // Format the contact information for the API
       const contactInfo = this.formatContactInfoForApi(registrantProfile);
       
+      // Debug output for contact information
+      console.log("Contact Information for API:", JSON.stringify(contactInfo, null, 2));
+      
       // If custom nameservers are provided, add them to the API parameters
       const nameserversParam: Record<string, string> = {};
-      if (nameservers) {
-        const nameserverList = nameservers.split(',').map(ns => ns.trim());
+      if (processed.nameservers) {
+        const nameserverList = processed.nameservers.split(',').map(ns => ns.trim());
         nameserverList.forEach((ns, index) => {
           nameserversParam[`Nameserver${index + 1}`] = ns;
         });
@@ -177,15 +190,21 @@ To complete the registration, run this command again with confirmPurchase=true.
       
       // Build parameters for domain creation
       try {
-        // Make API call to register the domain
-        const domainResponse = await this.callNamecheapApi('namecheap.domains.create', {
-          DomainName: domain,
-          Years: years.toString(),
-          AddFreeWhoisguard: enableWhoisPrivacy ? 'yes' : 'no',
-          WGEnabled: enableWhoisPrivacy ? 'yes' : 'no',
+        // Full parameters being sent to the API
+        const fullParams = {
+          DomainName: processed.domain,
+          Years: processed.years.toString(),
+          AddFreeWhoisguard: processed.enableWhoisPrivacy ? 'yes' : 'no',
+          WGEnabled: processed.enableWhoisPrivacy ? 'yes' : 'no',
           ...contactInfo,
           ...nameserversParam
-        });
+        };
+        
+        // Debug output for all parameters
+        console.log("Full API parameters:", JSON.stringify(fullParams, null, 2));
+        
+        // Make API call to register the domain
+        const domainResponse = await this.callNamecheapApi('namecheap.domains.create', fullParams);
         
         // Check if the domain was successfully registered
         if (domainResponse.CommandResponse && domainResponse.CommandResponse.DomainCreateResult) {
@@ -194,14 +213,14 @@ To complete the registration, run this command again with confirmPurchase=true.
           // If OrderID is present, the domain was registered successfully
           if (createResult.$ && createResult.$.OrderID) {
             return this.formatTextResponse(`
-✅ Success! Domain ${domain} has been registered!
+✅ Success! Domain ${processed.domain} has been registered!
 
 Order ID: ${createResult.$.OrderID}
 Transaction ID: ${createResult.$.TransactionID}
 Registration Date: ${createResult.$.RegisterDate || 'Immediate'}
 
-WhoisGuard: ${enableWhoisPrivacy ? 'Enabled' : 'Disabled'}
-Nameservers: ${nameservers || 'Default Namecheap DNS'}
+WhoisGuard: ${processed.enableWhoisPrivacy ? 'Enabled' : 'Disabled'}
+Nameservers: ${processed.nameservers || 'Default Namecheap DNS'}
 
 You can manage your new domain through your Namecheap account dashboard.
 `);
@@ -219,7 +238,7 @@ The API response did not contain the expected confirmation details.
         return this.formatTextResponse(`
 ⚠️ Domain purchase failed!
 
-There was an error while attempting to register ${domain}:
+There was an error while attempting to register ${processed.domain}:
 ${purchaseError instanceof Error ? purchaseError.message : 'Unknown error'}
 
 No charges have been applied to your account. Please try again later or check
@@ -256,17 +275,62 @@ your Namecheap account status and API limits.
         ...params
       };
       
-      const response = await axios.get(apiUrl, { params: requestParams });
+      // Debug: Log API request parameters (excluding sensitive API keys)
+      const { ApiKey, ...debugParams } = requestParams;
+      console.log(`API Call to ${command}:`, JSON.stringify(debugParams, null, 2));
+      
+      if (command === 'namecheap.domains.create') {
+        console.log('Domain creation request - Contact parameter count:', 
+          Object.keys(params).filter(key => 
+            key.startsWith('Registrant') || 
+            key.startsWith('Tech') || 
+            key.startsWith('Admin') || 
+            key.startsWith('AuxBilling')
+          ).length
+        );
+      }
+      
+      let response;
+      
+      // Use POST for domains.create as recommended by Namecheap API docs
+      if (command === 'namecheap.domains.create') {
+        console.log('Using POST method for domain creation as recommended by API docs');
+        
+        // Convert parameters to form-urlencoded format
+        const formData = new URLSearchParams();
+        for (const [key, value] of Object.entries(requestParams)) {
+          formData.append(key, value);
+        }
+        
+        // Make the POST request
+        response = await axios.post(apiUrl, formData, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        });
+      } else {
+        // For other commands, use GET as before
+        response = await axios.get(apiUrl, { params: requestParams });
+      }
+      
       const parser = new xml2js.Parser({ explicitArray: command === 'namecheap.users.getPricing' });
       const result = await parser.parseStringPromise(response.data);
       
+      // Debug: Log API response status
+      console.log(`API Response Status: ${result.ApiResponse.$.Status}`);
+      
       // Check for API errors
       if (result.ApiResponse.$.Status === 'ERROR' && result.ApiResponse.Errors) {
+        // Log the full API response for debugging
+        console.log('Full API Error Response:', JSON.stringify(result.ApiResponse, null, 2));
+        
         const errorMsg = typeof result.ApiResponse.Errors.Error === 'string' 
           ? result.ApiResponse.Errors.Error 
           : Array.isArray(result.ApiResponse.Errors.Error) 
             ? result.ApiResponse.Errors.Error[0] 
             : result.ApiResponse.Errors.Error._;
+            
+        console.log("API Error:", JSON.stringify(result.ApiResponse.Errors, null, 2));
         
         if (errorMsg && (
             errorMsg.includes('IP not whitelisted') || 
@@ -278,9 +342,24 @@ your Namecheap account status and API limits.
         throw new Error(`API Error: ${errorMsg}`);
       }
       
+      // For successful domain creation, log the full response
+      if (command === 'namecheap.domains.create' && result.ApiResponse.$.Status === 'OK') {
+        console.log('Domain creation successful. Full response:', JSON.stringify(result.ApiResponse, null, 2));
+      }
+      
       return result.ApiResponse;
     } catch (error) {
+      console.error('API request failed with error:', error);
+      
       if (axios.isAxiosError(error)) {
+        // Log the full error response if available
+        if (error.response) {
+          console.error('Error response data:', error.response.data);
+          console.error('Error response status:', error.response.status);
+          console.error('Error response headers:', error.response.headers);
+        } else if (error.request) {
+          console.error('Error request:', error.request);
+        }
         throw new Error(`API request failed: ${error.message}`);
       }
       throw error;
@@ -356,6 +435,8 @@ ${profile.organization ? `- Organization: ${profile.organization}` : ''}
   }
   
   private formatContactInfoForApi(profile: RegistrantProfile): Record<string, string> {
+    console.log("Formatting contact information for API from profile:", JSON.stringify(profile, null, 2));
+    
     // In Namecheap API, we need to format contact info for different contact types
     const contactTypes = ['Registrant', 'Tech', 'Admin', 'AuxBilling'];
     const contactInfo: Record<string, string> = {};
@@ -379,6 +460,7 @@ ${profile.organization ? `- Organization: ${profile.organization}` : ''}
       contactInfo[`${contactType}EmailAddress`] = profile.email;
     });
     
+    console.log("Generated contact info parameters:", JSON.stringify(contactInfo, null, 2));
     return contactInfo;
   }
 
@@ -449,4 +531,4 @@ ${profile.organization ? `- Organization: ${profile.organization}` : ''}
   }
 }
 
-export default RegisterDomainTool; 
+export default RegisterDomainTool;
