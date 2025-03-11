@@ -19,7 +19,7 @@ A Cursor MCP (Machine Capability Provider) integration for Namecheap Domains API
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v16 or higher
-- [Cursor AI](https://cursor.sh/) text editor
+- [Cursor AI](https://cursor.sh/) IDE
 - A [Namecheap](https://www.namecheap.com/) account with API access enabled
 - Namecheap API Key (can be obtained from your Namecheap account)
 
@@ -85,12 +85,6 @@ Edit `registrant-profile.json` with your contact details that will be used for d
 npm run build
 ```
 
-6. **Start the MCP server**
-
-```bash
-./start-mcp.sh
-```
-
 ## Adding to Cursor as an MCP Server
 
 To add this as an MCP server in Cursor:
@@ -116,16 +110,60 @@ Once added, you can use the MCP tools directly in Cursor's AI interface.
 
 In Cursor, use the `check_domain` tool:
 
+Example Prompt:
 ```
-check_domain domain=example.com
+is example.com available?
 ```
+
+Example Response:
+```
+I'll check if bingbang1234.com is available for registration.
+
+...
+
+Good news! The domain bingbang1234.com is available for registration.
+Would you like to:
+Get pricing information for this domain?
+Register this domain?
+Check availability of other domains?
+Let me know how you'd like to proceed.
+
+```
+
 
 ### Getting TLD Pricing
 
 To get pricing information for a specific TLD:
 
+Example Prompt:
 ```
-get_tld_pricing tld=com
+What is the price of bingbang1234.com?
+```
+
+Example Response:
+```
+I'll check the pricing information for the .com TLD, which will show you how much bingbang1234.com would cost.
+
+...
+
+Here's the pricing information for bingbang1234.com:
+Registration Pricing:
+1 year: $9.98
+2 years: $24.96
+3 years: $39.94
+4 years: $54.92
+5 years: $69.90
+6 years: $84.88
+7 years: $99.86
+8 years: $114.84
+9 years: $129.82
+10 years: $144.80
+Future Renewal:
+1 year renewal: $12.98
+Transfer:
+Transfer cost: $9.98
+Would you like to register this domain? I can help you with that process, or if you have any other domains or TLDs you'd like to check, I can assist with that as well.
+
 ```
 
 ### Registering a Domain
@@ -134,14 +172,41 @@ Domain registration is a two-step process for safety:
 
 1. First, check domain details and pricing:
 
-```
-register_domain domain=yourdomain.com years=1
-```
 
 2. If you're sure you want to purchase, confirm the purchase:
 
+Example Prompt:
 ```
-register_domain domain=yourdomain.com years=1 confirmPurchase=true
+register bingbang1234.com
+```
+
+Example Response:
+```
+I'll start the domain registration process for bingbang1234.com. This is the first step, which will show you the registration details without actually purchasing the domain yet.
+
+...
+
+Domain bingbang1234.com is available for registration!
+Pricing: $9.98 for 1 year
+Registration details:
+Domain: bingbang1234.com
+Period: 1 year
+Default nameservers will be used
+WhoisGuard Privacy: Enabled
+Contact information from your registrant profile:
+Name: John Doe
+Address: 123 Main St
+City: Anytown
+State/Province: CA
+Postal Code: 12345
+Country: US
+Phone: +1.5555555555
+Email: email@example.com
+
+To complete the registration, you need to confirm the purchase.
+
+⚠️ Important: Your Namecheap account will be charged $9.98 for this purchase if you confirm. ⚠️
+Would you like to proceed with the purchase, or would you like to modify any details such as the registration period or nameservers?
 ```
 
 Optional parameters:
