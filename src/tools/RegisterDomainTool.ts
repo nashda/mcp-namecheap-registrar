@@ -234,6 +234,7 @@ your Namecheap account status and API limits.
     }
   }
 
-  // Rest of the class methods remain unchanged
-  // ...
-} 
+  // Other necessary methods and properties...
+}
+
+export default RegisterDomainTool; 
