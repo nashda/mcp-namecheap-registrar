@@ -115,7 +115,7 @@ In Cursor, use the `check_domain` tool:
 
 Example Prompt:
 ```
-is example.com available?
+is bingbang1234.com available?
 ```
 
 Example Response:
