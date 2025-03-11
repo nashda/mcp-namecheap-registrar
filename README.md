@@ -1,6 +1,6 @@
 # Namecheap Domains MCP for Cursor
 
-A Cursor MCP (Machine Capability Provider) integration for Namecheap Domains API that allows you to check domain availability, get pricing information, and register domains directly through the Cursor AI interface.
+A [Cursor MCP](https://docs.cursor.com/context/model-context-protocol/) (Model Context Protocol) integration for Namecheap Domains API that allows you to check domain availability, get pricing information, and register domains directly through the Cursor AI interface.
 
 ![Cursor MCP](https://cursor.sh/assets/images/logo.svg)
 
