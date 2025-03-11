@@ -4,6 +4,9 @@ A [Cursor MCP](https://docs.cursor.com/context/model-context-protocol/) (Model C
 
 ![Cursor MCP](https://cursor.sh/assets/images/logo.svg)
 
+YouTube Walkthrough:
+[![Youtube Walkthrough](/youtube_vid.png)](https://www.youtube.com/watch?v=vRWy1tf5EHM "Namecheap Registrar MCP Server Integration for Cursor 🚀")
+
 ## ⚠️ Important Security Warning ⚠️
 
 **This tool uses the Namecheap live API by default and can make REAL purchases that will charge your Namecheap account.** Always double-check domain registration commands before confirming purchases.
