@@ -81,7 +81,7 @@ class RegisterDomainTool extends MCPTool<RegisterDomainInput> {
       const isPremium = result.$.IsPremiumName === 'true';
       
       if (!available) {
-        return `Domain ${domain} is not available for registration.`;
+        return this.formatErrorResponse(`Domain ${domain} is not available for registration.`);
       }
       
       // Try to load registrant profile
@@ -89,13 +89,13 @@ class RegisterDomainTool extends MCPTool<RegisterDomainInput> {
       try {
         registrantProfile = this.loadRegistrantProfile();
       } catch (profileError) {
-        return `
+        return this.formatErrorResponse(`
 Domain ${domain} is available for registration!
 
 However, I could not find a registrant profile for contact information.
 Please create a file named "registrant-profile.json" in the project root with your contact details.
 You can use "registrant-profile.example.json" as a template.
-`;
+`);
       }
       
       // Get domain pricing information
@@ -183,14 +183,14 @@ You can manage your new domain through your Namecheap account dashboard.
         }
         
         // If we didn't get expected response format
-        return `
+        return this.formatErrorResponse(`
 Something went wrong with the domain registration process.
 Please check your Namecheap account to see if the domain was registered.
 The API response did not contain the expected confirmation details.
-`;
+`);
       } catch (purchaseError) {
         // Detailed error message for purchase failures
-        return `
+        return this.formatErrorResponse(`
 ⚠️ Domain purchase failed!
 
 There was an error while attempting to register ${domain}:
@@ -198,13 +198,13 @@ ${purchaseError instanceof Error ? purchaseError.message : 'Unknown error'}
 
 No charges have been applied to your account. Please try again later or check
 your Namecheap account status and API limits.
-`;
+`);
       }
     } catch (error) {
       if (error instanceof Error) {
-        return `Error registering domain: ${error.message}`;
+        return this.formatErrorResponse(`Error registering domain: ${error.message}`);
       }
-      return `Error registering domain: Unknown error`;
+      return this.formatErrorResponse(`Error registering domain: Unknown error`);
     }
   }
 
@@ -420,6 +420,11 @@ ${profile.organization ? `- Organization: ${profile.organization}` : ''}
       }
       throw error;
     }
+  }
+
+  private formatErrorResponse(message: string): string {
+    // Simply return the error message as text to avoid content type errors
+    return message;
   }
 }
 
