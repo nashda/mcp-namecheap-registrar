@@ -46,7 +46,7 @@ interface MCPResponse {
 }
 
 class RegisterDomainTool extends MCPTool<RegisterDomainInput> {
-  name = "mcp__register_domain";
+  name = "register_domain";
   description = "Start the process of registering a domain name";
 
   schema = {

@@ -9,7 +9,7 @@ interface GetPricingInput {
 }
 
 class GetPricingTool extends MCPTool<GetPricingInput> {
-  name = "mcp__get_tld_pricing";
+  name = "get_tld_pricing";
   description = "Get pricing information for domain TLDs (e.g., .com, .net, .org)";
 
   schema = {
